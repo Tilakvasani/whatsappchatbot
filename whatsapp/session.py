@@ -10,11 +10,12 @@ Max turns:   20 turns kept (40 messages) to keep context window manageable
 """
 
 import json
+from typing import Optional
 from redis.asyncio import Redis
 from core.config import settings
 from core.logger import logger
 
-_redis: Redis | None = None
+_redis: Optional[Redis] = None
 
 SESSION_PREFIX = "zupwell:session:"
 SESSION_TTL    = 86400   # 24 hours

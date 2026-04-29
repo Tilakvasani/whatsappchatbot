@@ -5,9 +5,8 @@ Entry point for the Zupwell WhatsApp Bot server.
 
 Startup sequence:
   1. FastAPI app initialization
-  2. Redis connection check
-  3. ChromaDB collection check (warns if empty — run ingest first)
-  4. Twilio config validation
+  2. ChromaDB collection check (warns if empty — run ingest first)
+  3. Twilio + Azure OpenAI config validation
 
 Routes:
   POST /whatsapp/webhook  — Twilio webhook (main bot endpoint)
@@ -50,7 +49,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("❌ ChromaDB check failed: %s", e)
 
-    # Validate Twilio config
+    # Validate Twilio + Azure config
     missing = []
     if not settings.TWILIO_ACCOUNT_SID:
         missing.append("TWILIO_ACCOUNT_SID")
@@ -58,13 +57,19 @@ async def lifespan(app: FastAPI):
         missing.append("TWILIO_AUTH_TOKEN")
     if not settings.TWILIO_WHATSAPP_NUMBER:
         missing.append("TWILIO_WHATSAPP_NUMBER")
-    if not settings.OPENAI_API_KEY:
-        missing.append("OPENAI_API_KEY")
+    if not settings.AZURE_OPENAI_LLM_KEY:
+        missing.append("AZURE_OPENAI_LLM_KEY")
+    if not settings.AZURE_LLM_ENDPOINT:
+        missing.append("AZURE_LLM_ENDPOINT")
+    if not settings.AZURE_OPENAI_EMB_KEY:
+        missing.append("AZURE_OPENAI_EMB_KEY")
+    if not settings.AZURE_EMB_ENDPOINT:
+        missing.append("AZURE_EMB_ENDPOINT")
 
     if missing:
         logger.error("❌ Missing required env vars: %s", ", ".join(missing))
     else:
-        logger.info("✅ Twilio & OpenAI config looks good.")
+        logger.info("✅ Twilio & Azure OpenAI config looks good.")
 
     logger.info("✅ %s is ready!", settings.BOT_NAME)
     yield
@@ -95,9 +100,7 @@ app.include_router(whatsapp_router)
 
 def verify_admin_key(x_admin_key: str = Header(...)):
     """Simple admin key check — set ADMIN_KEY in your .env."""
-    import os
-    admin_key = os.getenv("ADMIN_KEY", "zupwell-admin-2024")
-    if x_admin_key != admin_key:
+    if x_admin_key != settings.ADMIN_KEY:
         raise HTTPException(status_code=403, detail="Invalid admin key")
     return True
 
@@ -135,13 +138,15 @@ async def admin_stats(_: bool = Depends(verify_admin_key)):
         faq_count = -1
 
     return {
-        "bot_name":    settings.BOT_NAME,
-        "environment": settings.APP_ENV,
-        "faq_chunks":  faq_count,
-        "llm_model":   settings.OPENAI_MODEL,
-        "embed_model": settings.OPENAI_EMBED_MODEL,
+        "bot_name":         settings.BOT_NAME,
+        "environment":      settings.APP_ENV,
+        "faq_chunks":       faq_count,
+        "llm_deployment":   settings.AZURE_LLM_DEPLOYMENT_41_MINI,
+        "embed_deployment": settings.AZURE_EMB_DEPLOYMENT,
+        "llm_endpoint":     settings.AZURE_LLM_ENDPOINT,
         "twilio_configured": bool(settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN),
-        "openai_configured": bool(settings.OPENAI_API_KEY),
+        "azure_llm_configured": bool(settings.AZURE_OPENAI_LLM_KEY and settings.AZURE_LLM_ENDPOINT),
+        "azure_emb_configured": bool(settings.AZURE_OPENAI_EMB_KEY and settings.AZURE_EMB_ENDPOINT),
     }
 
 

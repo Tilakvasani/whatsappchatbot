@@ -1,19 +1,22 @@
 """
 vector.py — ChromaDB client factory
 =====================================
-Singleton ChromaDB persistent client — same pattern as docForge's vector.py.
+Singleton ChromaDB persistent client.
+Uses Optional from typing for compatibility with chromadb versions
+where PersistentClient is a function wrapper, not a bare class.
 """
 
+from typing import Optional
 import chromadb
 from core.config import settings
 
 COLLECTION_NAME = "zupwell_faqs"
 
-_client_instance: chromadb.PersistentClient | None = None
+_client_instance: Optional[chromadb.Client] = None
 _collection_instance = None
 
 
-def get_chroma_client() -> chromadb.PersistentClient:
+def get_chroma_client() -> chromadb.Client:
     """Return the shared persistent ChromaDB client singleton."""
     global _client_instance
     if _client_instance is None:

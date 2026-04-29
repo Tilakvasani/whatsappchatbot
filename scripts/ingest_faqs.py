@@ -8,8 +8,7 @@ Usage:
     python scripts/ingest_faqs.py          # delta sync (only new FAQs)
     python scripts/ingest_faqs.py --force  # re-embed all FAQs
 
-This is equivalent to docForge's POST /api/rag/ingest endpoint,
-but as a standalone CLI script.
+Uses Azure OpenAI embeddings (text-embedding-3-large via AZURE_EMB_DEPLOYMENT).
 """
 
 import sys
@@ -43,7 +42,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Ingest failed: {e}")
         print("\nMake sure:")
-        print("  1. Your .env file has OPENAI_API_KEY set")
+        print("  1. Your .env file has AZURE_OPENAI_EMB_KEY and AZURE_EMB_ENDPOINT set")
         print("  2. data/zupwell_faqs.json exists")
         sys.exit(1)
 
