@@ -1,0 +1,20 @@
+# Core
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# LLM + Embeddings
+openai==1.56.2
+
+# Vector Database (same as docForge)
+chromadb==0.5.23
+
+# Redis (async) — same as docForge
+redis[asyncio]==5.2.1
+
+# Twilio WhatsApp
+twilio==9.3.7
+
+# Config
+pydantic-settings==2.6.1
+python-dotenv==1.0.1

@@ -1,0 +1,194 @@
+[
+  {
+    "id": "brand_001",
+    "category": "About Zupwell",
+    "title": "What is Zupwell?",
+    "content": "Zupwell is a premium health supplements brand based in Ahmedabad, Gujarat, India. Founded by Parag Hirpara, Zupwell was born to help people stay healthy, hydrated, and active in today's fast-paced lifestyle. We create health supplements that are easy to take and effective through the fusion of science and taste. Quality is our mantra. Our supplements are science-backed, delicious, and made for the modern lifestyle."
+  },
+  {
+    "id": "brand_002",
+    "category": "About Zupwell",
+    "title": "What is Zupwell's mission and vision?",
+    "content": "Mission: Health, which is not boring! Zupwell believes that taking health supplements should not feel like taking bitter medicine. That's why we bring you products that are both effective and delicious. Vision: To be India's leading name in Health Supplements, recognized for quality, scientific integrity, and commitment to patient and athlete well-being."
+  },
+  {
+    "id": "brand_003",
+    "category": "About Zupwell",
+    "title": "Who founded Zupwell?",
+    "content": "Zupwell was founded by Parag Hirpara, the Founder and CEO. He started Zupwell to bridge the gap between clinical effectiveness and modern convenience. The goal is to ensure that everyone can fulfil their dreams without compromising their health."
+  },
+  {
+    "id": "brand_004",
+    "category": "About Zupwell",
+    "title": "Where is Zupwell located?",
+    "content": "Zupwell is based in Ahmedabad, Gujarat, India. You can contact us at info@zupwell.com or call/WhatsApp us at +91 6355466208."
+  },
+  {
+    "id": "product_001",
+    "category": "Products",
+    "title": "What products does Zupwell sell?",
+    "content": "Zupwell currently offers premium electrolyte supplements. Our electrolyte formula is our flagship product. We have 200+ products available and serve 50,000+ happy customers. All products are 100% authentic and made with high-quality ingredients."
+  },
+  {
+    "id": "product_002",
+    "category": "Products",
+    "title": "What upcoming products is Zupwell developing?",
+    "content": "Zupwell is committed to becoming a leader in health supplements. We are currently in research and development for: Daily multivitamins and immune boosters, Energy and focus formulations, Specialized recovery blends. Innovation is in our DNA. Our electrolyte formula is just the beginning."
+  },
+  {
+    "id": "product_003",
+    "category": "Products",
+    "title": "Are Zupwell products safe and authentic?",
+    "content": "Yes, all Zupwell products are 100% authentic and safe. We follow FSSAI (Food Safety and Standards Authority of India) guidelines. Our products are science-backed with formulas grounded in clinical research, not marketing hype. We use high-quality ingredients with the best manufacturing standards — no compromises."
+  },
+  {
+    "id": "product_004",
+    "category": "Products",
+    "title": "What are the benefits of Zupwell electrolytes?",
+    "content": "Zupwell electrolytes are designed to help with hydration, combat fatigue, boost energy levels, and support recovery. In today's fast-paced life, fatigue, dehydration, and lack of energy hold us back — Zupwell electrolytes are formulated to solve exactly these problems. They are easy to take, effective, and delicious."
+  },
+  {
+    "id": "product_005",
+    "category": "Products",
+    "title": "Are Zupwell products FSSAI approved?",
+    "content": "Yes, Zupwell products comply with FSSAI (Food Safety and Standards Authority of India) regulations. All our health supplements meet the required food safety and quality standards. Please note that our products are health supplements and not meant for medicinal use."
+  },
+  {
+    "id": "product_006",
+    "category": "Products",
+    "title": "Can athletes use Zupwell supplements?",
+    "content": "Yes, Zupwell supplements are suitable for athletes and active individuals. Our vision specifically includes commitment to athlete well-being. The electrolyte formula is ideal for hydration and recovery during and after physical activity."
+  },
+  {
+    "id": "usage_001",
+    "category": "How to Use",
+    "title": "How do I use Zupwell electrolyte supplements?",
+    "content": "Zupwell supplements are designed to be easy to use and effective. The electrolytes can be mixed with water for a quick hydration boost. Follow the dosage instructions printed on the product packaging. For best results, consume regularly as part of a healthy lifestyle. Consult a healthcare professional if you have any medical conditions."
+  },
+  {
+    "id": "usage_002",
+    "category": "How to Use",
+    "title": "When is the best time to take Zupwell supplements?",
+    "content": "Zupwell electrolytes can be taken during exercise, after a workout for recovery, on hot days when you sweat more, or anytime you feel dehydrated or low on energy. Follow the directions on the packaging for specific timing recommendations."
+  },
+  {
+    "id": "usage_003",
+    "category": "How to Use",
+    "title": "Are Zupwell supplements safe for daily use?",
+    "content": "Zupwell health supplements are designed to be used regularly as part of a healthy lifestyle. Our products are made with high-quality ingredients and follow FSSAI guidelines. Please follow the recommended dosage on the packaging. These products are health supplements and not for medicinal use. Consult your doctor if you have any specific health conditions or are on medication."
+  },
+  {
+    "id": "order_001",
+    "category": "Orders & Payments",
+    "title": "How do I place an order on Zupwell?",
+    "content": "You can place an order on the Zupwell website at our products page. Browse our product catalogue, add items to your cart, proceed to checkout, fill in your delivery address, and complete payment. You can also contact us on WhatsApp at +91 6355466208 for assistance with your order."
+  },
+  {
+    "id": "order_002",
+    "category": "Orders & Payments",
+    "title": "What payment methods does Zupwell accept?",
+    "content": "Zupwell accepts multiple payment methods including UPI, credit/debit cards, net banking, and other popular payment options at checkout. All transactions are secure and encrypted for your safety."
+  },
+  {
+    "id": "order_003",
+    "category": "Orders & Payments",
+    "title": "How can I track my order?",
+    "content": "Once your order is placed and shipped, you will receive a tracking number via email or SMS. You can use this tracking number to monitor your shipment. You can also log in to your account on the Zupwell website to check your order status. For any order-related queries, contact us at info@zupwell.com or WhatsApp +91 6355466208."
+  },
+  {
+    "id": "order_004",
+    "category": "Orders & Payments",
+    "title": "Can I cancel my order?",
+    "content": "Orders can be cancelled before they are shipped. Please contact us immediately at info@zupwell.com or WhatsApp +91 6355466208 if you need to cancel. Once the order has been dispatched, cancellation may not be possible and you will need to initiate a return after receiving the product."
+  },
+  {
+    "id": "order_005",
+    "category": "Orders & Payments",
+    "title": "What is Zupwell's GSTIN?",
+    "content": "Zupwell operates from Gujarat, India, with State Code 24 (Gujarat). Our GST information is available on invoices generated for your orders. For business queries or GST invoice requests, contact us at info@zupwell.com."
+  },
+  {
+    "id": "shipping_001",
+    "category": "Shipping & Delivery",
+    "title": "How long does Zupwell take to deliver?",
+    "content": "Zupwell delivers within 3-5 business days across India. We aim to dispatch orders as quickly as possible. Delivery time may vary slightly depending on your location and logistics partners."
+  },
+  {
+    "id": "shipping_002",
+    "category": "Shipping & Delivery",
+    "title": "Does Zupwell deliver across India?",
+    "content": "Yes, Zupwell delivers across India. We serve customers pan-India. If you have concerns about delivery to a specific location, please contact us at info@zupwell.com or WhatsApp +91 6355466208."
+  },
+  {
+    "id": "shipping_003",
+    "category": "Shipping & Delivery",
+    "title": "Is there a minimum order value for free shipping?",
+    "content": "For the latest information on shipping charges and free shipping thresholds, please check our website or contact us at info@zupwell.com or WhatsApp +91 6355466208. We regularly update our shipping policies."
+  },
+  {
+    "id": "shipping_004",
+    "category": "Shipping & Delivery",
+    "title": "What happens if my order is delayed or lost?",
+    "content": "If your order is delayed beyond the expected delivery window of 3-5 days, please contact us at info@zupwell.com or WhatsApp +91 6355466208 with your order number. We will investigate with our logistics partner and resolve the issue as quickly as possible."
+  },
+  {
+    "id": "refund_001",
+    "category": "Returns & Refunds",
+    "title": "What is Zupwell's refund and return policy?",
+    "content": "Zupwell has a customer-friendly refund and cancellation policy. If you receive a damaged, defective, or wrong product, please contact us within 7 days of delivery with photos of the issue. We will arrange a replacement or refund. For detailed policy, visit our Refund & Cancellation Policy page on the website."
+  },
+  {
+    "id": "refund_002",
+    "category": "Returns & Refunds",
+    "title": "How do I request a refund or return?",
+    "content": "To request a refund or return: Contact us at info@zupwell.com or WhatsApp +91 6355466208. Provide your order number and reason for return. If it's a damaged or wrong product, share photos. We will guide you through the process. Refunds are processed back to the original payment method."
+  },
+  {
+    "id": "refund_003",
+    "category": "Returns & Refunds",
+    "title": "How long does it take to receive a refund?",
+    "content": "Once a refund is approved, it is typically processed within 5-7 business days back to the original payment method. The exact time may vary depending on your bank or payment provider. We will notify you by email once the refund is processed."
+  },
+  {
+    "id": "contact_001",
+    "category": "Contact & Support",
+    "title": "How can I contact Zupwell customer support?",
+    "content": "You can reach Zupwell customer support through multiple channels: Email: info@zupwell.com, Phone/WhatsApp: +91 6355466208, Address: Ahmedabad, Gujarat, India. We are also available on Instagram, Facebook, and YouTube. Our team is ready to help you with any queries about products, orders, shipping, or anything else."
+  },
+  {
+    "id": "contact_002",
+    "category": "Contact & Support",
+    "title": "What are Zupwell's customer support hours?",
+    "content": "For the most current customer support hours, please check our Contact page on the website or send us a message on WhatsApp at +91 6355466208. We strive to respond to all queries as quickly as possible."
+  },
+  {
+    "id": "contact_003",
+    "category": "Contact & Support",
+    "title": "Is Zupwell on social media?",
+    "content": "Yes, Zupwell is active on social media! You can find us on Instagram, Facebook, and YouTube. Follow us for the latest product updates, health tips, and offers. Links are available in the footer of our website."
+  },
+  {
+    "id": "legal_001",
+    "category": "Legal & Compliance",
+    "title": "Is Zupwell a legitimate company?",
+    "content": "Yes, Zupwell is a legitimate registered business operating from Ahmedabad, Gujarat, India. We are GST registered (State Code 24 - Gujarat) and FSSAI compliant. All our products are authentic and manufactured with the highest quality standards."
+  },
+  {
+    "id": "legal_002",
+    "category": "Legal & Compliance",
+    "title": "Are Zupwell products medicines or drugs?",
+    "content": "No, Zupwell products are health supplements, not medicines or drugs. They are not intended to diagnose, treat, cure, or prevent any disease. Our products are designed to support a healthy, active lifestyle. Always consult a qualified healthcare professional for medical advice or if you have existing health conditions."
+  },
+  {
+    "id": "legal_003",
+    "category": "Legal & Compliance",
+    "title": "What is Zupwell's privacy policy?",
+    "content": "Zupwell takes your privacy seriously. We collect only necessary personal information to process your orders and improve your experience. Your data is never sold to third parties. For full details, please read our Privacy Policy page on the Zupwell website."
+  },
+  {
+    "id": "legal_004",
+    "category": "Legal & Compliance",
+    "title": "What are Zupwell's terms and conditions?",
+    "content": "Zupwell's Terms & Conditions cover website use, ordering, payment, delivery, and dispute resolution. For full details, please visit our Terms & Conditions page on the website. By using our website and purchasing products, you agree to these terms."
+  }
+]
