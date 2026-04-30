@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     CHROMA_PATH: str = ""
 
     # ── JWT (same secret as ps5 backend — to read logged-in user) ────────────
-    JWT_SECRET:    str = "your-jwt-secret-here"
+    JWT_SECRET:    str = "ad56c9a219abc7c6572779f43eafcdd91f5eed12fd16243f193205f26283ea816bd3ba677d377822d596b8721723a69ad15e246aad979f2568d404434b900c41"
     JWT_ALGORITHM: str = "HS256"
 
     # ── App ───────────────────────────────────────────────────────────────────
