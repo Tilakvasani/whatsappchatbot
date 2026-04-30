@@ -1,292 +1,177 @@
 """
-webhook.py — Twilio WhatsApp Webhook Handler
-=============================================
-Handles incoming WhatsApp messages from Twilio, processes them via RAG,
-and sends replies using the Twilio REST API.
+webhook.py — Twilio WhatsApp Webhook (LangGraph powered)
+=========================================================
+Same structure as original — returns TwiML immediately, processes in background.
+Now routes through the LangGraph agent instead of calling RAG directly.
 
-Architecture:
-  - FastAPI endpoint receives Twilio POST webhook
-  - Returns empty TwiML immediately (avoids Twilio's 15s timeout)
-  - Background task handles the actual RAG + reply
-
-Special commands:
-  hi / hello / start       → Welcome message
-  help / menu              → Show available help topics
-  reset / clear / restart  → Clear conversation history
-  about / who are you      → About the bot
+Session state (ticket_stage, ticket_draft) is persisted in Redis
+between turns so multi-turn ticket collection works across messages.
 """
 
 import asyncio
+import json
+from typing import Optional
+
 from fastapi import APIRouter, Request, BackgroundTasks, Response
 from twilio.rest import Client as TwilioClient
 
+from agent.runner import run_agent
 from core.config import settings
 from core.logger import logger
-from rag.rag_service import answer_question, split_for_whatsapp
-from whatsapp.session import clear_session
+from whatsapp.session import clear_session, _get_redis, _session_key
 
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
 
-# ── Twilio client ─────────────────────────────────────────────────────────────
-_twilio_client: TwilioClient | None = None
+_twilio_client: Optional[TwilioClient] = None
 
 
 def get_twilio_client() -> TwilioClient:
-    """Return the shared Twilio client singleton."""
     global _twilio_client
     if _twilio_client is None:
-        _twilio_client = TwilioClient(
-            settings.TWILIO_ACCOUNT_SID,
-            settings.TWILIO_AUTH_TOKEN,
-        )
+        _twilio_client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     return _twilio_client
 
 
-# ── Static responses ──────────────────────────────────────────────────────────
+# ── WhatsApp message sender ───────────────────────────────────────────────────
 
-WELCOME_MESSAGE = """\
-👋 *Welcome to Zupwell Support!*
-
-Hi there! I'm your Zupwell assistant. I can help you with:
-
-• 🛍️ Products & ingredients
-• 📦 Orders & payments
-• 🚚 Shipping & delivery
-• 🔄 Returns & refunds
-• ℹ️ About Zupwell
-
-Just type your question and I'll be happy to help! 😊
-
-_Type *help* to see example questions._"""
-
-HELP_MESSAGE = """\
-🤖 *Zupwell Support — Example Questions*
-
-You can ask me things like:
-
-*Products:*
-• What products does Zupwell offer?
-• Are Zupwell supplements FSSAI approved?
-• What are the benefits of the electrolytes?
-
-*Orders & Shipping:*
-• How do I place an order?
-• How long does delivery take?
-• How can I track my order?
-
-*Returns & Refunds:*
-• What is the return policy?
-• How do I request a refund?
-
-*Contact:*
-• How can I contact Zupwell?
-
-📧 Email: info@zupwell.com
-📱 Call/WhatsApp: +91 6355466208
-
-_Just type your question and I'll answer! 😊_"""
-
-RESET_MESSAGE = """\
-✅ *Conversation reset!*
-
-Your chat history has been cleared. Let's start fresh! 😊
-
-How can I help you today?"""
-
-ABOUT_MESSAGE = """\
-🌟 *About This Bot*
-
-I'm the Zupwell virtual support assistant, powered by AI.
-
-I'm trained on Zupwell's FAQs and can answer questions about:
-• Products, ingredients & usage
-• Orders, payments & tracking
-• Shipping, delivery & returns
-• Brand information & policies
-
-For complex queries, I'll always connect you with our team:
-📧 info@zupwell.com
-📱 +91 6355466208
-
-_Ask away — I'm here to help! 💪_"""
-
-
-# ── Intent detection ──────────────────────────────────────────────────────────
-
-def _detect_special_command(text: str) -> str | None:
-    """
-    Check if the message is a special bot command.
-
-    Returns:
-        Command name or None.
-    """
-    t = text.strip().lower()
-
-    greetings = {"hi", "hello", "hey", "hii", "helo", "namaste", "start", "kem cho"}
-    if t in greetings or t.startswith("hi ") or t.startswith("hello "):
-        return "welcome"
-
-    if t in {"help", "menu", "options", "commands", "?"}:
-        return "help"
-
-    if t in {"reset", "clear", "restart", "new chat", "start over", "clr"}:
-        return "reset"
-
-    if t in {"about", "who are you", "what are you", "bot info"}:
-        return "about"
-
-    return None
-
-
-# ── Message sender ────────────────────────────────────────────────────────────
-
-def send_whatsapp_message(to: str, body: str) -> None:
-    """
-    Send a WhatsApp message via Twilio REST API.
-    Synchronous — called from background task thread.
-
-    Args:
-        to:   Recipient number in whatsapp:+XXXXXXXXXXX format.
-        body: Message text.
-    """
+def _send_wa(to: str, body: str) -> None:
     try:
         client = get_twilio_client()
-        message = client.messages.create(
+        msg = client.messages.create(
             from_=settings.TWILIO_WHATSAPP_NUMBER,
             to=to,
             body=body,
         )
-        logger.info("Sent WA message to %s | SID: %s", to[-4:], message.sid)
+        logger.info("WA sent to %s | SID: %s", to[-4:], msg.sid)
     except Exception as e:
-        logger.error("Failed to send WhatsApp message to %s: %s", to, e)
+        logger.error("WA send failed to %s: %s", to, e)
 
 
-async def send_whatsapp_message_async(to: str, body: str) -> None:
-    """Async wrapper — runs Twilio's sync client in a thread pool."""
+async def _send_wa_async(to: str, body: str) -> None:
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, send_whatsapp_message, to, body)
+    await loop.run_in_executor(None, _send_wa, to, body)
+
+
+def _split_message(text: str, max_len: int = 1500) -> list[str]:
+    """Split long messages on paragraph boundaries."""
+    if len(text) <= max_len:
+        return [text]
+    parts, current = [], ""
+    for para in text.split("\n\n"):
+        if len(current) + len(para) + 2 <= max_len:
+            current = (current + "\n\n" + para).strip()
+        else:
+            if current:
+                parts.append(current)
+            current = para
+    if current:
+        parts.append(current)
+    return parts or [text[:max_len]]
+
+
+# ── Ticket flow state in Redis ────────────────────────────────────────────────
+
+TICKET_STATE_TTL = 3600  # 1 hour
+
+
+async def _get_ticket_state(phone: str) -> dict:
+    """Load ticket stage/draft from Redis for this phone number."""
+    try:
+        redis = _get_redis()
+        key = f"zupwell:ticket_state:{phone.replace('whatsapp:', '')}"
+        raw = await redis.get(key)
+        return json.loads(raw) if raw else {"stage": "idle", "draft": {}}
+    except Exception:
+        return {"stage": "idle", "draft": {}}
+
+
+async def _save_ticket_state(phone: str, stage: str, draft: dict) -> None:
+    try:
+        redis = _get_redis()
+        key = f"zupwell:ticket_state:{phone.replace('whatsapp:', '')}"
+        await redis.set(key, json.dumps({"stage": stage, "draft": draft}), ex=TICKET_STATE_TTL)
+    except Exception as e:
+        logger.warning("Failed to save ticket state: %s", e)
+
+
+async def _clear_ticket_state(phone: str) -> None:
+    try:
+        redis = _get_redis()
+        key = f"zupwell:ticket_state:{phone.replace('whatsapp:', '')}"
+        await redis.delete(key)
+    except Exception:
+        pass
 
 
 # ── Background processing ─────────────────────────────────────────────────────
 
-async def process_and_reply(from_number: str, message_text: str) -> None:
-    """
-    Core background task:
-      1. Detect special commands.
-      2. Run RAG to get an answer.
-      3. Send reply via Twilio.
+async def process_and_reply(from_number: str, message_body: str, profile_name: str) -> None:
+    """Core background task — runs agent, sends WhatsApp reply."""
+    text = message_body.strip()
 
-    Args:
-        from_number:  Sender's WhatsApp number (whatsapp:+XXXXXXXXXX).
-        message_text: The incoming message text.
-    """
-    text = message_text.strip()
-
-    # ── 1. Handle special commands ────────────────────────────────────────────
-    command = _detect_special_command(text)
-
-    if command == "welcome":
-        await send_whatsapp_message_async(from_number, WELCOME_MESSAGE)
-        return
-
-    if command == "help":
-        await send_whatsapp_message_async(from_number, HELP_MESSAGE)
-        return
-
-    if command == "reset":
+    # Handle reset command
+    if text.lower() in {"reset", "clear", "restart"}:
         await clear_session(from_number)
-        await send_whatsapp_message_async(from_number, RESET_MESSAGE)
+        await _clear_ticket_state(from_number)
+        await _send_wa_async(from_number, "✅ *Chat reset!* Let's start fresh. How can I help you? 😊")
         return
 
-    if command == "about":
-        await send_whatsapp_message_async(from_number, ABOUT_MESSAGE)
-        return
+    # Load persisted ticket state
+    ticket_state = await _get_ticket_state(from_number)
 
-    # ── 2. Send "typing" indicator ────────────────────────────────────────────
-    # Optionally send a brief thinking message for longer queries
-    if len(text) > 50:
-        await send_whatsapp_message_async(from_number, "⏳ Looking that up for you...")
+    # Typing indicator for longer questions
+    if len(text) > 40:
+        await _send_wa_async(from_number, "⏳ Looking into that for you...")
 
-    # ── 3. Run RAG ────────────────────────────────────────────────────────────
-    try:
-        result = await answer_question(
-            question=text,
-            phone_number=from_number,
-        )
-        answer = result["answer"]
+    # Run the LangGraph agent
+    result = await run_agent(
+        user_input=text,
+        session_id=from_number,
+        source="whatsapp",
+        user_name=profile_name if profile_name != "Customer" else None,
+        user_phone=from_number.replace("whatsapp:", ""),
+        ticket_stage=ticket_state.get("stage", "idle"),
+        ticket_draft=ticket_state.get("draft", {}),
+    )
 
-        # Log low-confidence answers for monitoring
-        if result["confidence"] == "low":
-            logger.warning(
-                "Low confidence answer for: '%s...' from %s",
-                text[:50], from_number[-4:]
-            )
+    # Persist updated ticket state
+    await _save_ticket_state(
+        from_number,
+        result.get("ticket_stage", "idle"),
+        result.get("ticket_draft", {}),
+    )
 
-    except Exception as e:
-        logger.error("RAG failed for %s: %s", from_number[-4:], e)
-        answer = (
-            "Sorry, something went wrong on my end! 😅\n\n"
-            "Please contact us directly:\n"
-            "📧 info@zupwell.com\n"
-            "📱 +91 6355466208"
-        )
-
-    # ── 4. Split and send (handles long responses) ────────────────────────────
-    parts = split_for_whatsapp(answer)
+    # Send reply (split if needed)
+    parts = _split_message(result["response"])
     for part in parts:
-        await send_whatsapp_message_async(from_number, part)
+        await _send_wa_async(from_number, part)
         if len(parts) > 1:
-            await asyncio.sleep(0.5)  # small gap between split messages
+            await asyncio.sleep(0.5)
 
 
 # ── Webhook endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/webhook")
-async def whatsapp_webhook(
-    request: Request,
-    background_tasks: BackgroundTasks,
-):
+async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """
-    Twilio WhatsApp webhook endpoint.
-
-    Twilio sends a POST with form data including:
-        From: whatsapp:+XXXXXXXXXX
-        Body: the message text
-        ProfileName: sender's WhatsApp display name (optional)
-
-    Returns an empty TwiML response immediately (avoids Twilio's 15s timeout).
-    The actual processing happens in a BackgroundTask.
+    Twilio webhook endpoint.
+    Returns empty TwiML immediately → processes in background.
     """
-    form_data = await request.form()
-
-    from_number  = form_data.get("From", "")
-    message_body = form_data.get("Body", "")
-    profile_name = form_data.get("ProfileName", "Customer")
+    form = await request.form()
+    from_number  = form.get("From", "")
+    message_body = form.get("Body", "")
+    profile_name = form.get("ProfileName", "Customer")
 
     if not from_number or not message_body:
-        logger.warning("Received empty webhook — From: %s | Body: %s",
-                        from_number, message_body)
-        return Response(
-            content='<?xml version="1.0"?><Response></Response>',
-            media_type="text/xml",
-        )
+        return Response(content='<?xml version="1.0"?><Response></Response>', media_type="text/xml")
 
-    logger.info(
-        "Incoming WA from %s (%s): '%s...'",
-        from_number[-4:], profile_name, message_body[:50]
-    )
+    logger.info("WA IN from %s (%s): '%s...'", from_number[-4:], profile_name, message_body[:50])
 
-    # Queue the processing as a background task and respond immediately
-    background_tasks.add_task(process_and_reply, from_number, message_body)
+    background_tasks.add_task(process_and_reply, from_number, message_body, profile_name)
 
-    # Return empty TwiML — Twilio is satisfied, no timeout
-    return Response(
-        content='<?xml version="1.0"?><Response></Response>',
-        media_type="text/xml",
-    )
+    return Response(content='<?xml version="1.0"?><Response></Response>', media_type="text/xml")
 
 
 @router.get("/health")
 async def health():
-    """Health check for the WhatsApp bot service."""
     return {"status": "ok", "bot": settings.BOT_NAME}

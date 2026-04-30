@@ -1,12 +1,7 @@
 .env
 __pycache__/
 *.pyc
-*.pyo
 chroma_db/
-*.egg-info/
 .venv/
 venv/
-dist/
-build/
-.DS_Store
 *.log

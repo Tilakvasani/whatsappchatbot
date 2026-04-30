@@ -3,17 +3,30 @@ fastapi==0.115.5
 uvicorn[standard]==0.32.1
 python-multipart==0.0.12
 
-# LLM + Embeddings
+# LangGraph — agentic workflow
+langgraph==0.2.56
+langchain-core==0.3.25
+
+# Azure OpenAI (same as your existing setup)
 openai==1.56.2
 
-# Vector Database (same as docForge)
+# Vector DB
 chromadb==0.5.23
 
-# Redis (async) — same as docForge
+# Redis (async session store)
 redis[asyncio]==5.2.1
+
+# PostgreSQL (async, no ORM — raw asyncpg for speed)
+asyncpg==0.30.0
 
 # Twilio WhatsApp
 twilio==9.3.7
+
+# Notion API
+httpx==0.27.2
+
+# JWT decode (for reading ps5 auth tokens)
+PyJWT==2.9.0
 
 # Config
 pydantic-settings==2.6.1

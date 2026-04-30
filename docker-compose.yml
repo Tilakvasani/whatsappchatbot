@@ -1,36 +1,23 @@
 version: "3.9"
-
 services:
-  # ── Redis ─────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: zupwell_bot_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 10s; timeout: 5s; retries: 5
 
-  # ── WhatsApp Bot ───────────────────────────────────────────────────────────
   bot:
     build: .
-    container_name: zupwell_whatsapp_bot
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
+    ports: ["8000:8000"]
+    env_file: [.env]
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CHROMA_PATH=/app/chroma_db
-    volumes:
-      - chroma_data:/app/chroma_db
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_PATH: /app/chroma_db
+    volumes: [chroma_data:/app/chroma_db]
     depends_on:
-      redis:
-        condition: service_healthy
+      redis: {condition: service_healthy}
     restart: unless-stopped
 
 volumes:
