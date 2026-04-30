@@ -1,7 +1,5 @@
 """
-config.py — Zupwell Bot Unified Settings
-=========================================
-Covers: Azure OpenAI, Notion, Twilio, PostgreSQL, Redis, JWT, CORS
+config.py — Zupwell Bot Settings
 """
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
@@ -10,28 +8,28 @@ from pathlib import Path
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # ── Azure OpenAI — LLM (gpt-4.1-mini) ────────────────────────────────────
+    # ── Azure OpenAI — LLM ────────────────────────────────────────────────────
     AZURE_OPENAI_LLM_KEY:         str = ""
     AZURE_LLM_ENDPOINT:           str = ""
     AZURE_LLM_API_VERSION:        str = "2025-01-01-preview"
     AZURE_LLM_DEPLOYMENT_41_MINI: str = "gpt-4.1-mini"
 
-    # ── Azure OpenAI — Embeddings (text-embedding-3-large) ────────────────────
+    # ── Azure OpenAI — Embeddings ─────────────────────────────────────────────
     AZURE_OPENAI_EMB_KEY:  str = ""
     AZURE_EMB_ENDPOINT:    str = ""
     AZURE_EMB_API_VERSION: str = "2024-12-01-preview"
     AZURE_EMB_DEPLOYMENT:  str = "text-embedding-3-large"
 
     # ── Notion ────────────────────────────────────────────────────────────────
-    NOTION_TOKEN:       str = ""   # "secret_xxx" from your Notion integration
-    NOTION_DATABASE_ID: str = ""   # UUID only — no "?v=..." suffix
+    NOTION_TOKEN:       str = ""
+    NOTION_DATABASE_ID: str = ""
 
     # ── Twilio WhatsApp ───────────────────────────────────────────────────────
     TWILIO_ACCOUNT_SID:     str = ""
     TWILIO_AUTH_TOKEN:      str = ""
-    TWILIO_WHATSAPP_NUMBER: str = ""  # e.g. "whatsapp:+14155238886"
+    TWILIO_WHATSAPP_NUMBER: str = ""
 
-    # ── PostgreSQL (same DB as ps5 backend) ───────────────────────────────────
+    # ── PostgreSQL ────────────────────────────────────────────────────────────
     DATABASE_URL: str = "postgresql://user:pass@localhost:5432/zupwell"
 
     # ── Redis ─────────────────────────────────────────────────────────────────
@@ -40,8 +38,12 @@ class Settings(BaseSettings):
     # ── ChromaDB ──────────────────────────────────────────────────────────────
     CHROMA_PATH: str = ""
 
-    # ── JWT (same secret as ps5 backend — to read logged-in user) ────────────
-    JWT_SECRET:    str = "ad56c9a219abc7c6572779f43eafcdd91f5eed12fd16243f193205f26283ea816bd3ba677d377822d596b8721723a69ad15e246aad979f2568d404434b900c41"
+    # ── File uploads (local path served at /uploads) ──────────────────────────
+    UPLOAD_DIR:     str = "./uploads"
+    UPLOAD_MAX_MB:  int = 10
+
+    # ── JWT (same secret as ps5 backend) ─────────────────────────────────────
+    JWT_SECRET:    str = "your-jwt-secret-here"
     JWT_ALGORITHM: str = "HS256"
 
     # ── App ───────────────────────────────────────────────────────────────────
@@ -49,12 +51,13 @@ class Settings(BaseSettings):
     ADMIN_KEY:    str = "zupwell-admin-2024"
     APP_ENV:      str = "development"
     LOG_LEVEL:    str = "INFO"
-    CORS_ORIGINS: str = "http://localhost:3000"  # comma-separated for prod
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     def model_post_init(self, __context):
         if not self.CHROMA_PATH:
             self.CHROMA_PATH = str(Path(__file__).parent.parent / "chroma_db")
         Path(self.CHROMA_PATH).mkdir(parents=True, exist_ok=True)
+        Path(self.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 
     @property
     def cors_origin_list(self) -> list[str]:

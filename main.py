@@ -1,15 +1,12 @@
 """
-main.py — Zupwell Unified Bot — FastAPI Application
-=====================================================
-Serves both:
-  - WhatsApp webhook  → /whatsapp/webhook  (Twilio)
-  - Website chat API  → /chat/message      (Next.js widget)
-  - Admin endpoints   → /admin/*           (protected)
+main.py — Zupwell Bot — FastAPI Entry Point
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from core.config import settings
 from core.logger import logger
@@ -26,39 +23,36 @@ async def lifespan(app: FastAPI):
 
     # ChromaDB check
     try:
-        col = get_collection()
-        count = col.count()
+        count = get_collection().count()
         if count == 0:
             logger.warning("⚠️  ChromaDB empty — run: python scripts/ingest_notion.py")
         else:
-            logger.info("✅ ChromaDB ready — %d chunks", count)
+            logger.info("✅ ChromaDB: %d chunks loaded", count)
     except Exception as e:
-        logger.error("❌ ChromaDB error: %s", e)
+        logger.error("❌ ChromaDB: %s", e)
 
-    # PostgreSQL — ensure ticket table exists
+    # PostgreSQL
     try:
         await get_pool()
-        logger.info("✅ PostgreSQL ticket table ready")
+        logger.info("✅ PostgreSQL: ticket table ready")
     except Exception as e:
-        logger.error("❌ DB pool error: %s", e)
+        logger.error("❌ PostgreSQL: %s", e)
 
     # Config check
-    missing = [
-        k for k, v in {
-            "AZURE_OPENAI_LLM_KEY": settings.AZURE_OPENAI_LLM_KEY,
-            "AZURE_LLM_ENDPOINT":   settings.AZURE_LLM_ENDPOINT,
-            "AZURE_OPENAI_EMB_KEY": settings.AZURE_OPENAI_EMB_KEY,
-            "AZURE_EMB_ENDPOINT":   settings.AZURE_EMB_ENDPOINT,
-            "NOTION_TOKEN":         settings.NOTION_TOKEN,
-            "NOTION_DATABASE_ID":   settings.NOTION_DATABASE_ID,
-            "DATABASE_URL":         settings.DATABASE_URL,
-            "TWILIO_ACCOUNT_SID":   settings.TWILIO_ACCOUNT_SID,
-        }.items() if not v
-    ]
+    required = {
+        "AZURE_OPENAI_LLM_KEY": settings.AZURE_OPENAI_LLM_KEY,
+        "AZURE_LLM_ENDPOINT":   settings.AZURE_LLM_ENDPOINT,
+        "AZURE_OPENAI_EMB_KEY": settings.AZURE_OPENAI_EMB_KEY,
+        "AZURE_EMB_ENDPOINT":   settings.AZURE_EMB_ENDPOINT,
+        "NOTION_TOKEN":         settings.NOTION_TOKEN,
+        "NOTION_DATABASE_ID":   settings.NOTION_DATABASE_ID,
+        "DATABASE_URL":         settings.DATABASE_URL,
+    }
+    missing = [k for k, v in required.items() if not v]
     if missing:
         logger.error("❌ Missing .env vars: %s", ", ".join(missing))
     else:
-        logger.info("✅ All config present. Bot is ready! 🎉")
+        logger.info("✅ All config present — bot is ready! 🎉")
 
     yield
     logger.info("👋 Shutting down.")
@@ -66,8 +60,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Zupwell Bot API",
-    description="Unified AI support bot for WhatsApp + Website",
-    version="2.0.0",
+    description="AI support bot — WhatsApp + Website",
+    version="3.0.0",
     lifespan=lifespan,
 )
 
@@ -79,48 +73,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve uploaded photos as static files
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
 app.include_router(wa_router)
 app.include_router(chat_router)
 
 
-# ── Admin endpoints ────────────────────────────────────────────────────────────
+# ── Admin ─────────────────────────────────────────────────────────────────────
 
-def _check_admin(x_admin_key: str = Header(...)):
+def _admin(x_admin_key: str = Header(...)):
     if x_admin_key != settings.ADMIN_KEY:
         raise HTTPException(status_code=403, detail="Forbidden")
     return True
 
 
 @app.post("/admin/ingest")
-async def admin_ingest(force: bool = False, _=Depends(_check_admin)):
-    """Re-ingest Notion docs into ChromaDB. Pass ?force=true to re-embed all."""
-    logger.info("Admin triggered Notion ingest (force=%s)", force)
+async def admin_ingest(force: bool = False, _=Depends(_admin)):
+    """Re-sync Notion → ChromaDB. ?force=true re-embeds everything."""
     result = await ingest_notion(force=force)
     return {"status": "success", **result}
 
 
 @app.get("/admin/stats")
-async def admin_stats(_=Depends(_check_admin)):
+async def admin_stats(_=Depends(_admin)):
     try:
         count = get_collection().count()
     except Exception:
         count = -1
     return {
-        "bot_name":        settings.BOT_NAME,
-        "env":             settings.APP_ENV,
-        "chroma_chunks":   count,
-        "llm_deployment":  settings.AZURE_LLM_DEPLOYMENT_41_MINI,
-        "embed_deployment": settings.AZURE_EMB_DEPLOYMENT,
-        "notion_db":       settings.NOTION_DATABASE_ID,
+        "bot_name":    settings.BOT_NAME,
+        "env":         settings.APP_ENV,
+        "chroma_docs": count,
+        "llm":         settings.AZURE_LLM_DEPLOYMENT_41_MINI,
+        "embed":       settings.AZURE_EMB_DEPLOYMENT,
+        "notion_db":   settings.NOTION_DATABASE_ID,
     }
 
 
 @app.get("/")
 async def root():
     return {
-        "name":            settings.BOT_NAME,
-        "status":          "running",
-        "whatsapp_webhook": "/whatsapp/webhook",
-        "chat_api":        "/chat/message",
-        "docs":            "/docs",
+        "name":              settings.BOT_NAME,
+        "version":           "3.0",
+        "whatsapp_webhook":  "/whatsapp/webhook",
+        "chat_api":          "/chat/message",
+        "photo_upload":      "/chat/upload-photo",
+        "ticket_status":     "/chat/ticket/{ref}",
+        "docs":              "/docs",
     }
