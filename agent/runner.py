@@ -4,7 +4,7 @@ runner.py — Unified Agent Runner
 Single function used by both WhatsApp webhook and website API.
 """
 from typing import Optional
-from langgraph.graph.message import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from agent.graph import get_graph, AgentState
 from core.logger import logger
