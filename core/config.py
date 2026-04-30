@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     ADMIN_KEY:    str = "zupwell-admin-2024"
     APP_ENV:      str = "development"
     LOG_LEVEL:    str = "INFO"
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = ""
 
     def model_post_init(self, __context):
         if not self.CHROMA_PATH:
