@@ -51,7 +51,9 @@ class Settings(BaseSettings):
     ADMIN_KEY:    str = "zupwell-admin-2024"
     APP_ENV:      str = "development"
     LOG_LEVEL:    str = "INFO"
-    CORS_ORIGINS: str = ""
+
+    # ── CORS — comma-separated list of allowed origins ────────────────────────
+    CORS_ORIGINS: str = "http://localhost:3000,https://ps5-phi.vercel.app,https://ps5-hhvf.vercel.app"
 
     def model_post_init(self, __context):
         if not self.CHROMA_PATH:
