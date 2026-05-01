@@ -69,7 +69,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_origin="https://ps5-phi.vercel.app/",
+    allow_origin_regex="https://ps5-phi.vercel.app/",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
